@@ -17,7 +17,8 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -60,6 +61,7 @@ Temporary Items
 # Ignore all local history of files
 .history
 .ionide
+.archive
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,certificates
 
