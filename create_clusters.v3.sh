@@ -349,7 +349,10 @@ clusteradm addon enable --names governance-policy-framework --clusters node1,nod
 # ------------------------------------------
 #
 clusteradm addon enable addon --names config-policy-controller --clusters node1,node2,node3 --context ${CTX_HUB_CLUSTER}
+kubectl config use-context ${CTX_HUB_CLUSTER}
+kubectl apply -n default -f https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-pod-placement.yaml
+kubectl patch -n default placement.cluster.open-cluster-management.io/placement-policy-pod --type=merge -p "{\"spec\":{\"predicates\":[{\"requiredClusterSelector\":{\"labelSelector\":{\"matchExpressions\":[]}}}]}}"
 #
 echo "Completed Successfully"
 #
-clusteradm get clusters --context ${CTX_HUB_CLUSTER}
+clusteradm get addon --context ${CTX_HUB_CLUSTER} 
