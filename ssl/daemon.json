@@ -1,0 +1,11 @@
+{
+    "icc": false,
+    "tls": true,
+    "tlsverify": true,
+    "tlscacert": "/etc/docker/ssl/rootCA.pem",
+    "tlscert": "/etc/docker/ssl/daemon-cert.pem",
+    "tlskey": "/etc/docker/ssl/daemon-key.pem",
+    "userland-proxy": false,
+    "default-ulimit": "nofile=50:100",
+    "hosts": ["unix:///var/run/docker.sock", "tcp://0.0.0.0:2376"]
+  }
