@@ -1,15 +1,18 @@
 #!/bin/bash
 #
+# Uncomment to see where the variables may fail
+# ---------------------------------------------
 #set -x
 #
 # Add your variables below
-#
+# ------------------------
 # ON your management machine and with all nodes active
 # and your docker configuration enabled for remote access
-# Please be sure to setup your CA (consider mkcert)
+# Please be sure to setup your CA (consider mkcert --install)
 #
 # Globals
 # -------
+export USER=jsoehner
 export CAROOT=ssl/
 export HUB_IP=192.168.100.110
 export HUB_NAME=master
@@ -29,9 +32,9 @@ export NODE_HOSTNAME=cluster1
 # cert and key onto the docker host
 #
 mkcert ${NODE_HOSTNAME}.${DOMAIN_NAME} ${HUB_IP}
-scp ssl/rootCA.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem jsoehner@${NODE_HOSTNAME}:~
+scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem ${USER}@${NODE_HOSTNAME}:~
 #
 # Create a new docker context
 # and switch to the new context
@@ -46,6 +49,7 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     req_extensions = v3_req
     distinguished_name = req_distinguished_name
     [req_distinguished_name]
+    
     [ v3_req ]   
     basicConstraints = CA:FALSE
     keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -58,21 +62,21 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     IP.1 = 127.0.0.1
     IP.2 = ${HUB_IP}
 EOF
-scp ssl/${NODE_HOSTNAME}-openssl.cnf jsoehner@${NODE_HOSTNAME}:openssl.cnf
-ssh -t jsoehner@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json jsoehner@${NODE_HOSTNAME}:~
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
+ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
 #
 # Patch systemd for flag error
-ssh jsoehner@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo service docker restart'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
 #
 # Remove any stale clusters
 kind delete cluster --name $(kind get clusters 2>/dev/null)
@@ -91,8 +95,6 @@ EOF
 #
 clusteradm init --wait --context ${CTX_HUB_CLUSTER}
 #
-#export TOKEN=$(clusteradm get token --context ${CTX_HUB_CLUSTER} | grep "token=" | cut -c 7-)
-#
 # --------------------------------
 # Create a connection to the Node1
 # --------------------------------
@@ -106,9 +108,9 @@ export CTX_MANAGED_CLUSTER=kind-${NODE_HOSTNAME}
 # docker daemon cert and key onto the docker host
 #
 mkcert ${NODE_HOSTNAME}.${DOMAIN_NAME} ${NODE_IP}
-scp ssl/rootCA.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem jsoehner@${NODE_HOSTNAME}:~
+scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem ${USER}@${NODE_HOSTNAME}:~
 #
 # Create a new docker context
 # and switch to the new context
@@ -123,6 +125,7 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     req_extensions = v3_req
     distinguished_name = req_distinguished_name
     [req_distinguished_name]
+    
     [ v3_req ]   
     basicConstraints = CA:FALSE
     keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -135,21 +138,21 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     IP.1 = 127.0.0.1
     IP.2 = ${NODE_IP}
 EOF
-scp ssl/${NODE_HOSTNAME}-openssl.cnf jsoehner@${NODE_HOSTNAME}:openssl.cnf
-ssh -t jsoehner@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json jsoehner@${NODE_HOSTNAME}:~
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
+ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
 #
 # Patch systemd for flag error
-ssh jsoehner@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo service docker restart'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
 #
 # Remove any stale clusters
 kind delete cluster --name $(kind get clusters 2>/dev/null)
@@ -178,30 +181,28 @@ export NODE_HOSTNAME=node2
 export NODE_IP=192.168.100.112
 export CTX_MANAGED_CLUSTER=kind-${NODE_HOSTNAME}
 #
-# Assuming you have already installed
-# your CA into a sub directory called
-# 'ssl' this part creates a daemon cert
-# and adds the rootCA, docker daemon
+# Assuming you have already installed your CA into a sub directory called
+# 'ssl' this part creates a daemon cert and adds the rootCA, docker daemon
 # cert and key onto the docker host
 #
 mkcert ${NODE_HOSTNAME}.${DOMAIN_NAME} ${NODE_IP}
-scp ssl/rootCA.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem jsoehner@${NODE_HOSTNAME}:~
+scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem ${USER}@${NODE_HOSTNAME}:~
 #
-# Create a new docker context
-# and switch to the new context
+# Create a new docker context and switch to the new context
 #
 docker context create ${NODE_HOSTNAME} --description "${NODE_HOSTNAME} context created" --docker "host=tcp://${NODE_IP}:2376,ca=ssl/rootCA.pem,cert=./Jeffs-MacBook+1-client.pem,key=./Jeffs-MacBook+1-client-key.pem"
 docker context use ${NODE_HOSTNAME}
 #
-# Create OpenSSL config
+# Create OpenSSL config for the node
 #
 tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     [req]
     req_extensions = v3_req
     distinguished_name = req_distinguished_name
     [req_distinguished_name]
+    
     [ v3_req ]   
     basicConstraints = CA:FALSE
     keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -214,21 +215,21 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     IP.1 = 127.0.0.1
     IP.2 = ${NODE_IP}
 EOF
-scp ssl/${NODE_HOSTNAME}-openssl.cnf jsoehner@${NODE_HOSTNAME}:openssl.cnf
-ssh -t jsoehner@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json jsoehner@${NODE_HOSTNAME}:~
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
+ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
 #
 # Patch systemd for flag error
-ssh jsoehner@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo service docker restart'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
 #
 # Remove any stale clusters
 kind delete cluster --name $(kind get clusters 2>/dev/null)
@@ -264,9 +265,9 @@ export CTX_MANAGED_CLUSTER=kind-${NODE_HOSTNAME}
 # cert and key onto the docker host
 #
 mkcert ${NODE_HOSTNAME}.${DOMAIN_NAME} ${NODE_IP}
-scp ssl/rootCA.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem jsoehner@${NODE_HOSTNAME}:~
-scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem jsoehner@${NODE_HOSTNAME}:~
+scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1.pem ${USER}@${NODE_HOSTNAME}:~
+scp ${NODE_HOSTNAME}.${DOMAIN_NAME}+1-key.pem ${USER}@${NODE_HOSTNAME}:~
 #
 # Create a new docker context
 # and switch to the new context
@@ -281,6 +282,7 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     req_extensions = v3_req
     distinguished_name = req_distinguished_name
     [req_distinguished_name]
+    
     [ v3_req ]   
     basicConstraints = CA:FALSE
     keyUsage = nonRepudiation, digitalSignature, keyEncipherment
@@ -293,21 +295,21 @@ tee ssl/${NODE_HOSTNAME}-openssl.cnf <<EOF
     IP.1 = 127.0.0.1
     IP.2 = ${NODE_IP}
 EOF
-scp ssl/${NODE_HOSTNAME}-openssl.cnf jsoehner@${NODE_HOSTNAME}:openssl.cnf
-ssh -t jsoehner@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json jsoehner@${NODE_HOSTNAME}:~
-ssh jsoehner@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
+ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
 #
 # Patch systemd for flag error
-ssh jsoehner@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh jsoehner@${NODE_HOSTNAME} 'sudo service docker restart'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
 #
 # Remove any stale clusters
 kind delete cluster --name $(kind get clusters 2>/dev/null)
