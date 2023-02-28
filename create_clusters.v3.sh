@@ -15,7 +15,7 @@
 export NODE_VERSION=v1.26.0
 export USER=jsoehner
 export CAROOT=ssl/
-export CLIENT_CERT=Jeffs-MacBook+1-client
+export CLIENT_CERT=TISR90R8V4A+1-client
 export HUB_IP=192.168.100.110
 export HUB_NAME=master
 export DOMAIN_NAME=jsigroup.local
@@ -38,15 +38,15 @@ mv ${NODE_HOSTNAME}.${DOMAIN_NAME}*.pem ssl/
 scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?-key.pem ${USER}@${NODE_HOSTNAME}:~
-rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
+#rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
 #
 # Create a new docker context and switch to the new context
 # ---------------------------------------------------------
 #
+docker context rm ${NODE_HOSTNAME} -f
 docker context create ${NODE_HOSTNAME}\
- --description "${NODE_HOSTNAME} context created"\
- --docker "host=tcp://${HUB_IP}:2376,ca=ssl/rootCA.pem,\
-cert=ssl/${CLIENT_CERT}.pem,key=ssl/${CLIENT_CERT}-key.pem"
+  --description "${NODE_HOSTNAME} context created"\
+  --docker "host=tcp://${HUB_IP}:2376,ca=ssl/rootCA.pem,cert=ssl/${CLIENT_CERT}.pem,key=ssl/${CLIENT_CERT}-key.pem"
 docker context use ${NODE_HOSTNAME}
 #
 # Create OpenSSL config
@@ -77,6 +77,13 @@ EOF
 scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
 ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+#
+# Remove and re-install new Trusted Root CA
+#
+ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
@@ -128,11 +135,12 @@ mv -f ${NODE_HOSTNAME}.${DOMAIN_NAME}*.pem ssl/
 scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?-key.pem ${USER}@${NODE_HOSTNAME}:~
-rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
+#rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
 #
 # Create a new docker context and switch to the new context
 # ---------------------------------------------------------
 #
+docker context rm ${NODE_HOSTNAME} -f
 docker context create ${NODE_HOSTNAME}\
  --description "${NODE_HOSTNAME} context created"\
  --docker "host=tcp://${NODE_IP}:2376,ca=ssl/rootCA.pem,\
@@ -167,6 +175,12 @@ EOF
 scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
 ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+#
+# Remove and re-install new Trusted Root CA
+#
+ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
@@ -224,11 +238,12 @@ mv ${NODE_HOSTNAME}.${DOMAIN_NAME}*.pem ssl/
 scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?-key.pem ${USER}@${NODE_HOSTNAME}:~
-rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
+#rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
 #
 # Create a new docker context and switch to the new context
 # ---------------------------------------------------------
 #
+docker context rm ${NODE_HOSTNAME} -f
 docker context create ${NODE_HOSTNAME}\
  --description "${NODE_HOSTNAME} context created"\
  --docker "host=tcp://${NODE_IP}:2376,ca=ssl/rootCA.pem,\
@@ -263,6 +278,12 @@ EOF
 scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
 ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+#
+# Remove and re-install new Trusted Root CA
+#
+ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
@@ -320,11 +341,12 @@ mv ${NODE_HOSTNAME}.${DOMAIN_NAME}*.pem ssl/
 scp ssl/rootCA.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?.pem ${USER}@${NODE_HOSTNAME}:~
 scp ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?-key.pem ${USER}@${NODE_HOSTNAME}:~
-rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
+#rm -rf ssl/${NODE_HOSTNAME}.${DOMAIN_NAME}+?*
 #
 # Create a new docker context and switch to the new context
 # ---------------------------------------------------------
 #
+docker context rm ${NODE_HOSTNAME} -f
 docker context create ${NODE_HOSTNAME}\
  --description "${NODE_HOSTNAME} context created"\
  --docker "host=tcp://${NODE_IP}:2376,ca=ssl/rootCA.pem,\
@@ -359,6 +381,12 @@ EOF
 scp ssl/${NODE_HOSTNAME}-openssl.cnf ${USER}@${NODE_HOSTNAME}:openssl.cnf
 ssh -t ${USER}@${NODE_HOSTNAME} 'sudo mkdir -p /etc/docker/ssl'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
+#
+# Remove and re-install new Trusted Root CA
+#
+ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
 ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
