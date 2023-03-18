@@ -2,7 +2,7 @@
 #
 # Uncomment to see where the variables may fail
 # ---------------------------------------------
-#set -x
+# set -x
 #
 # Add your variables below
 # ------------------------
@@ -15,7 +15,8 @@
 export NODE_VERSION=v1.26.0
 export USER=jsoehner
 export CAROOT=ssl/
-export CLIENT_CERT=TISR90R8V4A+1-client
+#export CLIENT_CERT=TISR90R8V4A+1-client
+export CLIENT_CERT=Jeffs-MacBook+1-client
 export HUB_IP=192.168.100.110
 export HUB_NAME=master
 export DOMAIN_NAME=jsigroup.local
@@ -80,23 +81,28 @@ ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
 #
 # Remove and re-install new Trusted Root CA
 #
-ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
-#
-# Patch systemd for flag error
-# ----------------------------
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+REMOTE_CA_HASH=$(ssh ${USER}@${NODE_HOSTNAME} "sudo shasum -a 256 /usr/local/share/ca-certificates/docker-root-ca.crt | awk '{print $1}' ") || echo "Missing files"
+LOCAL_CA_HASH=$(shasum -a 256 ssl/rootCA.pem | awk '{print $1}')
+cmp --silent $REMOTE_CA_HASH $LOCAL_CA_HASH
+if [ "$?" == "1" ]; then
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+    scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+    #
+    # Patch systemd for flag error
+    # ----------------------------
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+fi
 #
 # Remove any stale clusters
 # -------------------------
@@ -184,23 +190,28 @@ ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
 #
 # Remove and re-install new Trusted Root CA
 #
-ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
-#
-# Patch systemd for flag error
-# ----------------------------
-#
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+REMOTE_CA_HASH=$(ssh ${USER}@${NODE_HOSTNAME} "sudo shasum -a 256 /usr/local/share/ca-certificates/docker-root-ca.crt | awk '{print $1}' ") || echo "Missing files"
+LOCAL_CA_HASH=$(shasum -a 256 ssl/rootCA.pem | awk '{print $1}')
+cmp --silent $REMOTE_CA_HASH $LOCAL_CA_HASH
+if [ "$?" == "1" ]; then
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+    scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+    #
+    # Patch systemd for flag error
+    # ----------------------------
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+fi
 #
 # Remove any stale clusters
 # -------------------------
@@ -293,23 +304,28 @@ ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
 #
 # Remove and re-install new Trusted Root CA
 #
-ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
-#
-# Patch systemd for flag error
-# ----------------------------
-#
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+REMOTE_CA_HASH=$(ssh ${USER}@${NODE_HOSTNAME} "sudo shasum -a 256 /usr/local/share/ca-certificates/docker-root-ca.crt | awk '{print $1}' ") || echo "Missing files"
+LOCAL_CA_HASH=$(shasum -a 256 ssl/rootCA.pem | awk '{print $1}')
+cmp --silent $REMOTE_CA_HASH $LOCAL_CA_HASH
+if [ "$?" == "1" ]; then
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+    scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+    #
+    # Patch systemd for flag error
+    # ----------------------------
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+fi
 #
 # Remove any stale clusters
 # -------------------------
@@ -402,23 +418,28 @@ ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/openssl.cnf /etc/docker/ssl/openssl.cnf'
 #
 # Remove and re-install new Trusted Root CA
 #
-ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
-scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
-ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
-#
-# Patch systemd for flag error
-# ----------------------------
-#
-ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
-ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+REMOTE_CA_HASH=$(ssh ${USER}@${NODE_HOSTNAME} "sudo shasum -a 256 /usr/local/share/ca-certificates/docker-root-ca.crt | awk '{print $1}' ") || echo "Missing files"
+LOCAL_CA_HASH=$(shasum -a 256 ssl/rootCA.pem | awk '{print $1}')
+cmp --silent $REMOTE_CA_HASH $LOCAL_CA_HASH
+if [ "$?" == "1" ]; then
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo rm /etc/ssl/certs/docker-root-ca.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp -f ~/rootCA.pem  /usr/local/share/ca-certificates/docker-root-ca.crt'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo update-ca-certificates'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/rootCA.pem /etc/docker/ssl/rootCA.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1.pem /etc/docker/ssl/daemon-cert.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/*.jsigroup.local+1-key.pem /etc/docker/ssl/daemon-key.pem'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo chmod 600 /etc/docker/ssl/*'
+    scp ssl/daemon.json ${USER}@${NODE_HOSTNAME}:~
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo mv ~/daemon.json /etc/docker/daemon.json'
+    #
+    # Patch systemd for flag error
+    # ----------------------------
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo cp /lib/systemd/system/docker.service /etc/systemd/system/'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo sed -i "s/\-H fd:\/\///" /etc/systemd/system/docker.service'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo systemctl daemon-reload'
+    ssh ${USER}@${NODE_HOSTNAME} 'sudo service docker restart'
+fi
 #
 # Remove any stale clusters
 # -------------------------
